@@ -3,10 +3,10 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 entity CacheController is
-    port ( 
+	port ( 
 		clk : in  STD_LOGIC;
 		ADDR : out  STD_LOGIC_VECTOR(15 downto 0);
-    RDY, WR_RD, MEMSTRB, WEN : out STD_LOGIC
+		RDY, WR_RD, MEMSTRB, WEN : out STD_LOGIC
 	);
 end CacheController;
 
@@ -27,7 +27,7 @@ architecture Behavioral of CacheController is
 	end component;
 
 	component SRAM
-	  port (
+		port (
 		 clka : in STD_LOGIC;
 		 wea : in STD_LOGIC_VECTOR(0 downto 0);
 		 addra : in STD_LOGIC_VECTOR(7 downto 0);
@@ -49,16 +49,16 @@ architecture Behavioral of CacheController is
 
 	component icon
 	port (
-    CONTROL0 : inout STD_LOGIC_VECTOR(35 downto 0));
+		CONTROL0 : inout STD_LOGIC_VECTOR(35 downto 0));
 	end component;
 	
 	component ila
 	port (
-    CONTROL: inout STD_LOGIC_VECTOR(35 downto 0);
-    CLK : in STD_LOGIC;
-    DATA : in STD_LOGIC_VECTOR(99 downto 0);
-    TRIG0 : in STD_LOGIC_VECTOR(0 to 0));
-	END component;
+		CONTROL: inout STD_LOGIC_VECTOR(35 downto 0);
+		CLK : in STD_LOGIC;
+		DATA : in STD_LOGIC_VECTOR(99 downto 0);
+		TRIG0 : in STD_LOGIC_VECTOR(0 to 0));
+	end component;
 
 ---------------------------------------------------------
 -- signals
@@ -238,4 +238,3 @@ architecture Behavioral of CacheController is
 	ila_data(55 downto 54) <= state_to_bin(current_state);
 
 end Behavioral;
-
