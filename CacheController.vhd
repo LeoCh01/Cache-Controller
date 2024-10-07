@@ -77,6 +77,7 @@ architecture Behavioral of CacheController is
 	signal sdram_wr_rd : STD_LOGIC;
 	signal sdram_memstrb : STD_LOGIC;
 	signal sdram_din, sdram_dout : STD_LOGIC_VECTOR(7 downto 0);
+	signal sdram_rdy : STD_LOGIC;
 
 	signal v_bit, d_bit : STD_LOGIC(7 downto 0);
 	signal cache_tag : STD_LOGIC_VECTOR(7 downto 0);
@@ -176,22 +177,23 @@ architecture Behavioral of CacheController is
 
 					when WRITE_BACK =>
 						sdram_wr_rd <= '1';
-						sdram_addr <= CPU_addr;
-						sdram_memstrb <= '1';
-
-						
-						-- sdram_addr <= cache_tag & cache_index & cache_offset;
-						-- sdram_wr_rd <= '1';
-						-- sdram_memstrb <= '1';
-						-- sdram_din <= d_bit(cache_index);
-						-- current_state <= LOAD_FROM_MEMORY;
 
 					when LOAD_FROM_MEMORY =>
-						-- sdram_addr <= CPU_addr;
-						-- sdram_wr_rd <= CPU_wr_rd;
-						-- sdram_memstrb <= '0';
-						-- sdram_din <= CPU_DOut;
-						-- current_state <= IDLE;
+						sdram_wr_rd <= '0';
+						sdram_addr <= cache_tag & cache_index & '00000';
+						
+						if (sdram_rdy = '1') then
+							sdram_memstrb <= '1';
+							sdram_rdy <= '0';
+						end if;						
+						
+						if (sdram_memstrb = '0') then
+							d_bit(cache_index) <= '1';
+							v_bit(cache_index) <= '1';
+							CPU_Din <= sdram_dout;
+							sdram_rdy <= '0';
+							current_state <= IDLE;
+						end if;
 
 					when others =>
 						current_state <= IDLE;	
