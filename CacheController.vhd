@@ -187,11 +187,11 @@ architecture Behavioral of CacheController is
 						-- current_state <= LOAD_FROM_MEMORY;
 
 					when LOAD_FROM_MEMORY =>
-						sdram_addr <= CPU_addr;
-						sdram_wr_rd <= CPU_wr_rd;
-						sdram_memstrb <= '0';
-						sdram_din <= CPU_DOut;
-						current_state <= IDLE;
+						-- sdram_addr <= CPU_addr;
+						-- sdram_wr_rd <= CPU_wr_rd;
+						-- sdram_memstrb <= '0';
+						-- sdram_din <= CPU_DOut;
+						-- current_state <= IDLE;
 
 					when others =>
 						current_state <= IDLE;	
