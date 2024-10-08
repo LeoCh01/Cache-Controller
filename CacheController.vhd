@@ -77,18 +77,20 @@ architecture Behavioral of CacheController is
 	signal sdram_wr_rd : STD_LOGIC;
 	signal sdram_memstrb : STD_LOGIC;
 	signal sdram_din, sdram_dout : STD_LOGIC_VECTOR(7 downto 0);
-	signal sdram_rdy : STD_LOGIC;
 
+	type tags is array(0 to 7) of STD_LOGIC_VECTOR(7 downto 0);
+	signal cache_tags : tags := (others => (others => '0'));
 	signal v_bit, d_bit : STD_LOGIC(7 downto 0);
 	signal cache_tag : STD_LOGIC_VECTOR(7 downto 0);
 	signal cache_index : STD_LOGIC_VECTOR(2 downto 0);
 	signal cache_offset : STD_LOGIC_VECTOR(4 downto 0);
+	signal mem_counter : integer := 0;
 
 	signal control0 : STD_LOGIC_VECTOR(35 downto 0);
 	signal ila_data : STD_LOGIC_VECTOR(99 downto 0);
 	signal trig0 : STD_LOGIC_VECTOR(0 downto 0);
 
-	type cache_state is (IDLE, COMPARE, WRITE_BACK, LOAD_FROM_MEMORY);
+	type cache_state is (IDLE, COMPARE, WRITE_BACK, LOAD_FROM_MEMORY, CACHE_HIT);
 	signal current_state : cache_state := IDLE;
 
 	begin
@@ -139,6 +141,10 @@ architecture Behavioral of CacheController is
 	process(clk)
 		begin
 			if (clk'Event and clk='1') then
+				cache_tag <= CPU_addr(15 downto 8);
+				cache_index <= CPU_addr(7 downto 5);
+				cache_offset <= CPU_addr(4 downto 0);
+
 				case current_state is
 					when IDLE => 
 						CPU_rdy <= '1';
@@ -147,68 +153,77 @@ architecture Behavioral of CacheController is
 						end if;
 
 					when COMPARE =>
-						cache_tag <= CPU_addr(15 downto 8);
-						cache_index <= CPU_addr(7 downto 5);
-						cache_offset <= CPU_addr(4 downto 0);
-
-						if (v_bit(cache_index) = '1' and cache_tag = d_bit(cache_index)) then
+						if (v_bit(to_integer(unsigned(cache_index))) = '1' and cache_tags(to_integer(unsigned(cache_index))) = cache_tag) then
 							-- hit
-							if (CPU_wr_rd = '1') then
+							if (CPU_wr_rd = '0') then
 								-- write
 								sram_wen <= '1';
 								sram_din <= CPU_DOut;
-								d_bit(cache_index) <= '1';
+								d_bit(to_integer(unsigned(cache_index))) <= '1';
 							else
 								-- read
 								sram_wen <= '0';
-								CPU_Din <= sram_dout;
 							end if;
 
 							sram_addr <= cache_index & cache_offset;
-							current_state <= IDLE;
+							current_state <= CACHE_HIT;
 						else
 							-- miss
-							if (d_bit(cache_index) = '1') then
+							if (d_bit(to_integer(unsigned(cache_index))) = '1') then
 								current_state <= WRITE_BACK;
 							else
 								current_state <= LOAD_FROM_MEMORY;
 							end if;
+
+							sram_addr 
 						end if;
 
 					when WRITE_BACK =>
-						sdram_wr_rd <= '1';
+						if (mem_counter = 64) then
+							mem_counter <= 0;
+							sdram_memstrb <= '0';
+							current_state <= LOAD_FROM_MEMORY;
+						else
+							if (mem_counter mod 2 = 0) then
+								sdram_memstrb <= '0';
+								sram_wen <= '0';
+								sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
+							else
+								sdram_wr_rd <= '0';
+								sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
+								sdram_din <= sram_dout;
+								sdram_memstrb <= '1';
+								mem_counter <= mem_counter + 1;
+							end if;
+						end if;
 
 					when LOAD_FROM_MEMORY =>
-						sdram_wr_rd <= '0';
-						sdram_addr <= cache_tag & cache_index & '00000';
-						
-						if (sdram_rdy = '1') then
-							sdram_memstrb <= '1';
-							sdram_rdy <= '0';
-						end if;						
-						
-						if (sdram_memstrb = '0') then
-							d_bit(cache_index) <= '1';
-							v_bit(cache_index) <= '1';
-							CPU_Din <= sdram_dout;
-							sdram_rdy <= '0';
-							current_state <= IDLE;
+						if (mem_counter = 64) then
+							mem_counter <= 0;
+							current_state <= COMPARE;
+						else
+							if (mem_counter mod 2 = 0) then
+								sdram_wr_rd <= '1';
+								sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
+								sdram_memstrb <= '1';
+							else
+								sram_wen <= '1';
+								sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
+								sram_din <= sdram_dout;
+								sdram_memstrb <= '0';
+								mem_counter <= mem_counter + 1;
+							end if;
 						end if;
+
+					when CACHE_HIT =>
+						CPU_Din <= sram_dout;
+						current_state <= IDLE;
 
 					when others =>
 						current_state <= IDLE;	
 				end case;
 			end if;
 	end process;
-
----------------------------------------------------------
--- Connections?
----------------------------------------------------------
-		-- ADDR <= CPU_addr;
-		-- RDY <= CPU_rdy;
-		-- WR_RD <= CPU_wr_rd;
-		-- MEMSTRB <= sdram_memstrb;
-		-- WEN <= sram_wen;
 
 ---------------------------------------------------------
 -- functions
