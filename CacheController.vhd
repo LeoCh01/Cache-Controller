@@ -174,8 +174,6 @@ architecture Behavioral of CacheController is
 							else
 								current_state <= LOAD_FROM_MEMORY;
 							end if;
-
-							sram_addr 
 						end if;
 
 					when WRITE_BACK =>
@@ -184,6 +182,7 @@ architecture Behavioral of CacheController is
 							sdram_memstrb <= '0';
 							current_state <= LOAD_FROM_MEMORY;
 						else
+							-- load cache first, then write to memory
 							if (mem_counter mod 2 = 0) then
 								sdram_memstrb <= '0';
 								sram_wen <= '0';
@@ -202,6 +201,7 @@ architecture Behavioral of CacheController is
 							mem_counter <= 0;
 							current_state <= COMPARE;
 						else
+							-- load memory first, then write to cache
 							if (mem_counter mod 2 = 0) then
 								sdram_wr_rd <= '1';
 								sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
