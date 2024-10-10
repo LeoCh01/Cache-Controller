@@ -21,7 +21,7 @@ architecture Behavioral of SDRAM_controller is
     port (
       clka : in STD_LOGIC;
       wea : in STD_LOGIC_VECTOR(0 downto 0);
-      addra : in STD_LOGIC_VECTOR(15 downto 0);
+      addra : in STD_LOGIC_VECTOR(11 downto 0);
       dina : in STD_LOGIC_VECTOR(7 downto 0);
       douta : out STD_LOGIC_VECTOR(7 downto 0)
     );
@@ -31,7 +31,7 @@ architecture Behavioral of SDRAM_controller is
 -- signals
 ---------------------------------------------------------
   signal SDRAM_wea : STD_LOGIC_VECTOR(0 downto 0);
-  signal SDRAM_addra : STD_LOGIC_VECTOR(15 downto 0);
+  signal SDRAM_addra : STD_LOGIC_VECTOR(11 downto 0);
   signal SDRAM_dina : STD_LOGIC_VECTOR(7 downto 0);
   signal SDRAM_douta : STD_LOGIC_VECTOR(7 downto 0);
 
@@ -41,10 +41,10 @@ architecture Behavioral of SDRAM_controller is
   begin
   SDRAM_inst : SDRAM port map (
     clka => clk,
-    wea => sram_wen,
-    addra => sram_addr,
-    dina => sram_din,
-    douta => sram_dout
+    wea => SDRAM_wea,
+    addra => SDRAM_addra,
+    dina => SDRAM_dina,
+    douta => SDRAM_dina
   );
 
 ---------------------------------------------------------
@@ -54,8 +54,8 @@ architecture Behavioral of SDRAM_controller is
     begin
     if (clk'Event and clk='1') then
       if (MEMSTRB = '1') then
-        SDRAM_wea <= WR_RD;
-        SDRAM_addra <= ADDR;
+        SDRAM_wea(0) <= WR_RD;
+        SDRAM_addra <= ADDR(11 downto 0);
         SDRAM_dina <= DIN;
       end if;
     end if;

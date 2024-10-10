@@ -12,20 +12,6 @@ end CacheController;
 
 architecture Behavioral of CacheController is
 ---------------------------------------------------------
--- functions
----------------------------------------------------------
-  function state_to_bin(state: cache_state) return std_logic_vector is
-    begin
-    case state is
-      when IDLE => return "00";
-      when COMPARE => return "01";
-      when WRITE_BACK => return "10";
-      when LOAD_FROM_MEMORY => return "11";
-      when others => return "00";
-    end case;
-  end function;
-
----------------------------------------------------------
 -- Components
 ---------------------------------------------------------
   component CPU_gen
@@ -73,7 +59,7 @@ architecture Behavioral of CacheController is
       CONTROL: inout STD_LOGIC_VECTOR(35 downto 0);
       CLK : in STD_LOGIC;
       DATA : in STD_LOGIC_VECTOR(63 downto 0);
-      TRIG0 : in STD_LOGIC_VECTOR(0 to 0)
+      TRIG0 : in STD_LOGIC_VECTOR(7 downto 0)
     );
   end component;
 
@@ -95,7 +81,7 @@ architecture Behavioral of CacheController is
 
   signal sram_addr : STD_LOGIC_VECTOR(7 downto 0);
   signal sram_din, sram_dout : STD_LOGIC_VECTOR(7 downto 0);
-  signal sram_wen : STD_LOGIC;
+  signal sram_wen : STD_LOGIC_VECTOR(0 downto 0);
 
   signal sdram_addr : STD_LOGIC_VECTOR(15 downto 0);
   signal sdram_wr_rd : STD_LOGIC;
@@ -104,7 +90,7 @@ architecture Behavioral of CacheController is
 
   type tags is array(0 to 7) of STD_LOGIC_VECTOR(7 downto 0);
   signal cache_tags : tags := (others => (others => '0'));
-  signal v_bit, d_bit : STD_LOGIC(7 downto 0);
+  signal v_bit, d_bit : STD_LOGIC_VECTOR(7 downto 0);
   signal cache_tag : STD_LOGIC_VECTOR(7 downto 0);
   signal cache_index : STD_LOGIC_VECTOR(2 downto 0);
   signal cache_offset : STD_LOGIC_VECTOR(4 downto 0);
@@ -112,12 +98,26 @@ architecture Behavioral of CacheController is
 
   signal control0 : STD_LOGIC_VECTOR(35 downto 0);
   signal control1 : STD_LOGIC_VECTOR(35 downto 0);
-  signal ila_data : STD_LOGIC_VECTOR(99 downto 0);
-  signal trig0 : STD_LOGIC_VECTOR(0 downto 0);
-  signal vio_out : STD_LOGIC_VECTOR(17 downto 0);
+  signal ila_data : STD_LOGIC_VECTOR(63 downto 0);
+  signal trig0 : STD_LOGIC_VECTOR(7 downto 0);
+  signal vio_out : STD_LOGIC_VECTOR(35 downto 0);
 
   type cache_state is (IDLE, COMPARE, WRITE_BACK, LOAD_FROM_MEMORY, CACHE_HIT);
   signal current_state : cache_state := IDLE;
+
+---------------------------------------------------------
+-- functions
+---------------------------------------------------------
+  function state_to_bin(state: cache_state) return std_logic_vector is
+    begin
+    case state is
+      when IDLE => return "00";
+      when COMPARE => return "01";
+      when WRITE_BACK => return "10";
+      when LOAD_FROM_MEMORY => return "11";
+      when others => return "00";
+    end case;
+  end function;
 
 ---------------------------------------------------------
 -- port maps
@@ -189,12 +189,12 @@ architecture Behavioral of CacheController is
             -- hit
             if (CPU_wr_rd = '0') then
               -- write
-              sram_wen <= '1';
+              sram_wen(0) <= '1';
               sram_din <= CPU_DOut;
               d_bit(to_integer(unsigned(cache_index))) <= '1';
             else
               -- read
-              sram_wen <= '0';
+              sram_wen(0) <= '0';
             end if;
 
             sram_addr <= cache_index & cache_offset;
@@ -217,7 +217,7 @@ architecture Behavioral of CacheController is
             -- load cache first, then write to memory
             if (mem_counter mod 2 = 0) then
               sdram_memstrb <= '0';
-              sram_wen <= '0';
+              sram_wen(0) <= '0';
               sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
             else
               sdram_wr_rd <= '0';
@@ -239,7 +239,7 @@ architecture Behavioral of CacheController is
               sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
               sdram_memstrb <= '1';
             else
-              sram_wen <= '1';
+              sram_wen(0) <= '1';
               sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
               sram_din <= sdram_dout;
               sdram_memstrb <= '0';
@@ -267,7 +267,7 @@ architecture Behavioral of CacheController is
   ila_data(32) <= CPU_wr_rd;
   ila_data(33) <= CPU_cs;
   ila_data(34) <= CPU_rdy;
-  ila_data(35) <= sram_wen;
+  ila_data(35) <= sram_wen(0);
   ila_data(43 downto 36) <= d_bit;
   ila_data(51 downto 44) <= v_bit;
   ila_data(55 downto 54) <= state_to_bin(current_state);
