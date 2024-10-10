@@ -12,6 +12,20 @@ end CacheController;
 
 architecture Behavioral of CacheController is
 ---------------------------------------------------------
+-- functions
+---------------------------------------------------------
+	function state_to_bin(state: cache_state) return std_logic_vector is
+		begin
+			case state is
+				when IDLE => return "00";
+				when COMPARE => return "01";
+				when WRITE_BACK => return "10";
+				when LOAD_FROM_MEMORY => return "11";
+				when others => return "00";
+			end case;
+	end function;
+
+---------------------------------------------------------
 -- Components
 ---------------------------------------------------------
 	component CPU_gen
@@ -48,16 +62,26 @@ architecture Behavioral of CacheController is
 	end component;
 
 	component icon
-	port (
-		CONTROL0 : inout STD_LOGIC_VECTOR(35 downto 0));
+		port (
+			CONTROL0 : inout STD_LOGIC_VECTOR(35 downto 0);
+			CONTROL1 : inout STD_LOGIC_VECTOR(35 downto 0)
+		);
 	end component;
 	
 	component ila
-	port (
-		CONTROL: inout STD_LOGIC_VECTOR(35 downto 0);
-		CLK : in STD_LOGIC;
-		DATA : in STD_LOGIC_VECTOR(99 downto 0);
-		TRIG0 : in STD_LOGIC_VECTOR(0 to 0));
+		port (
+			CONTROL: inout STD_LOGIC_VECTOR(35 downto 0);
+			CLK : in STD_LOGIC;
+			DATA : in STD_LOGIC_VECTOR(63 downto 0);
+			TRIG0 : in STD_LOGIC_VECTOR(0 to 0)
+		);
+	end component;
+
+	component vio
+		port (
+			CONTROL : inout STD_LOGIC_VECTOR(35 downto 0);
+			ASYNC_OUT : out STD_LOGIC_VECTOR(35 downto 0)
+		);
 	end component;
 
 ---------------------------------------------------------
@@ -87,8 +111,10 @@ architecture Behavioral of CacheController is
 	signal mem_counter : integer := 0;
 
 	signal control0 : STD_LOGIC_VECTOR(35 downto 0);
+	signal control1 : STD_LOGIC_VECTOR(35 downto 0);
 	signal ila_data : STD_LOGIC_VECTOR(99 downto 0);
 	signal trig0 : STD_LOGIC_VECTOR(0 downto 0);
+	signal vio_out : STD_LOGIC_VECTOR(17 downto 0);
 
 	type cache_state is (IDLE, COMPARE, WRITE_BACK, LOAD_FROM_MEMORY, CACHE_HIT);
 	signal current_state : cache_state := IDLE;
@@ -125,7 +151,8 @@ architecture Behavioral of CacheController is
 		);
 
 		icon_inst : icon port map (
-			CONTROL0 => control0
+			CONTROL0 => control0,
+			CONTROL1 => control1
 		);
 
 		ila_inst : ila port map (
@@ -133,6 +160,11 @@ architecture Behavioral of CacheController is
 			CLK => clk,
 			DATA => ila_data,
 			TRIG0 => trig0
+		);
+
+		vio_inst : vio port map (
+			CONTROL => control1,
+			ASYNC_OUT => vio_out
 		);
 
 ---------------------------------------------------------
@@ -224,20 +256,6 @@ architecture Behavioral of CacheController is
 				end case;
 			end if;
 	end process;
-
----------------------------------------------------------
--- functions
----------------------------------------------------------
-	function state_to_bin(state: cache_state) return std_logic_vector is
-		begin
-			case state is
-				when IDLE => return "00";
-				when COMPARE => return "01";
-				when WRITE_BACK => return "10";
-				when LOAD_FROM_MEMORY => return "11";
-				when others => return "00";
-			end case;
-	end function;
 
 ---------------------------------------------------------
 -- ILA ports
