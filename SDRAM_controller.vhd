@@ -44,7 +44,7 @@ architecture Behavioral of SDRAM_controller is
     wea => SDRAM_wea,
     addra => SDRAM_addra,
     dina => SDRAM_dina,
-    douta => SDRAM_dina
+    douta => SDRAM_douta
   );
 
 ---------------------------------------------------------

@@ -36,7 +36,7 @@ architecture Behavioral of CacheController is
     );
   end component;
 
-  component SDRAM_controller
+  component SDRAM_Controller
     port (
       clk : in  STD_LOGIC;
       ADDR : in  STD_LOGIC_VECTOR (15 downto 0);
@@ -141,7 +141,7 @@ architecture Behavioral of CacheController is
     douta => sram_dout
   );
 
-  SDRAM_Controller_inst : SDRAM_controller port map (
+  SDRAM_Controller_inst : SDRAM_Controller port map (
     clk => clk,
     ADDR => sdram_addr,
     WR_RD => sdram_wr_rd,
