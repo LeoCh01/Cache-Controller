@@ -249,6 +249,7 @@ architecture Behavioral of CacheController is
 
         when CACHE_HIT =>
           CPU_Din <= sram_dout;
+			 cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
           current_state <= IDLE;
 
         when others =>
@@ -256,6 +257,15 @@ architecture Behavioral of CacheController is
       end case;
     end if;
   end process;
+  
+---------------------------------------------------------
+-- Output
+---------------------------------------------------------
+  --ADDR <= CPU_addr;
+  --RDY <= CPU_rdy;
+  --WR_RD <= CPU_wr_rd;
+  --MEMSTRB <= sdram_memstrb;
+  --WEN <= sram_wen;
 
 ---------------------------------------------------------
 -- ILA ports
