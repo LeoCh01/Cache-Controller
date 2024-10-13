@@ -76,7 +76,8 @@ architecture Behavioral of CacheController is
   signal CPU_addr : STD_LOGIC_VECTOR(15 downto 0);
   signal CPU_wr_rd : STD_LOGIC;
   signal CPU_cs : STD_LOGIC;
-  signal CPU_rdy : STD_LOGIC;
+  signal CPU_trig : STD_LOGIC;
+  signal CPU_rst : STD_LOGIC;
   signal CPU_Din, CPU_DOut : STD_LOGIC_VECTOR(7 downto 0);
 
   signal sram_addr : STD_LOGIC_VECTOR(7 downto 0);
@@ -90,7 +91,8 @@ architecture Behavioral of CacheController is
 
   type tags is array(0 to 7) of STD_LOGIC_VECTOR(7 downto 0);
   signal cache_tags : tags := (others => (others => '0'));
-  signal v_bit, d_bit : STD_LOGIC_VECTOR(7 downto 0);
+  signal d_bit : STD_LOGIC_VECTOR(7 downto 0);
+  signal v_bit : STD_LOGIC_VECTOR(7 downto 0);
   signal cache_tag : STD_LOGIC_VECTOR(7 downto 0);
   signal cache_index : STD_LOGIC_VECTOR(2 downto 0);
   signal cache_offset : STD_LOGIC_VECTOR(4 downto 0);
@@ -101,9 +103,12 @@ architecture Behavioral of CacheController is
   signal ila_data : STD_LOGIC_VECTOR(63 downto 0);
   signal trig0 : STD_LOGIC_VECTOR(7 downto 0);
   signal vio_out : STD_LOGIC_VECTOR(35 downto 0);
+  signal testing : STD_LOGIC_VECTOR(15 downto 0);
+  signal test2 : STD_LOGIC := '0';
+  signal counter: std_logic_vector(15 downto 0);
 
   type cache_state is (IDLE, COMPARE, WRITE_BACK, LOAD_FROM_MEMORY, CACHE_HIT);
-  signal current_state : cache_state := IDLE;
+  signal current_state : cache_state;
 
 ---------------------------------------------------------
 -- functions
@@ -125,8 +130,8 @@ architecture Behavioral of CacheController is
   begin
   CPU_inst : CPU_gen port map (
     clk => clk,
-    rst => '0',
-    trig => CPU_rdy,
+    rst => CPU_rst,
+    trig => CPU_trig,
     Address => CPU_addr,
     wr_rd => CPU_wr_rd,
     cs => CPU_cs,
@@ -169,19 +174,21 @@ architecture Behavioral of CacheController is
 
 ---------------------------------------------------------
 -- State Machine
----------------------------------------------------------
+--------------------------------------------------------- 
   process(clk)
     begin
     if (clk'Event and clk='1') then
       cache_tag <= CPU_addr(15 downto 8);
       cache_index <= CPU_addr(7 downto 5);
       cache_offset <= CPU_addr(4 downto 0);
-
+		
       case current_state is
         when IDLE => 
-          CPU_rdy <= '1';
+          CPU_trig <= '1';
           if (CPU_cs = '1') then
+				test2 <= '1';
             current_state <= COMPARE;
+				CPU_trig <= '0';
           end if;
 
         when COMPARE =>
@@ -253,33 +260,28 @@ architecture Behavioral of CacheController is
           current_state <= IDLE;
 
         when others =>
+		    CPU_trig <= '0';
           current_state <= IDLE;	
       end case;
     end if;
   end process;
   
 ---------------------------------------------------------
--- Output
----------------------------------------------------------
-  --ADDR <= CPU_addr;
-  --RDY <= CPU_rdy;
-  --WR_RD <= CPU_wr_rd;
-  --MEMSTRB <= sdram_memstrb;
-  --WEN <= sram_wen;
-
----------------------------------------------------------
 -- ILA ports
 ---------------------------------------------------------
-  ila_data(15 downto 0) <= CPU_addr;
-  ila_data(23 downto 16) <= cache_tag;
-  ila_data(26 downto 24) <= cache_index;
-  ila_data(31 downto 27) <= cache_offset;
-  ila_data(32) <= CPU_wr_rd;
-  ila_data(33) <= CPU_cs;
-  ila_data(34) <= CPU_rdy;
-  ila_data(35) <= sram_wen(0);
-  ila_data(43 downto 36) <= d_bit;
-  ila_data(51 downto 44) <= v_bit;
-  ila_data(55 downto 54) <= state_to_bin(current_state);
+--  ila_data(15 downto 0) <= CPU_addr;
+--  ila_data(23 downto 16) <= cache_tag;
+--  ila_data(26 downto 24) <= cache_index;
+--  ila_data(31 downto 27) <= cache_offset;
+--  ila_data(32) <= CPU_wr_rd;
+--  ila_data(33) <= CPU_cs;
+--  ila_data(34) <= CPU_trig;
+--  ila_data(35) <= sram_wen(0);
+--  ila_data(43 downto 36) <= d_bit;
+--  ila_data(51 downto 44) <= v_bit;
+--  ila_data(53 downto 52) <= state_to_bin(LOAD_FROM_MEMORY);
+--  ila_data(55 downto 54) <= state_to_bin(current_state);
+--  ila_data(56) <= CPU_rst;
+  
 
 end Behavioral;
