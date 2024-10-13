@@ -91,8 +91,8 @@ architecture Behavioral of CacheController is
 
   type tags is array(0 to 7) of STD_LOGIC_VECTOR(7 downto 0);
   signal cache_tags : tags := (others => (others => '0'));
-  signal d_bit : STD_LOGIC_VECTOR(7 downto 0);
-  signal v_bit : STD_LOGIC_VECTOR(7 downto 0);
+  signal d_bit : STD_LOGIC_VECTOR(7 downto 0) := "00000000";
+  signal v_bit : STD_LOGIC_VECTOR(7 downto 0) := "00000000";
   signal cache_tag : STD_LOGIC_VECTOR(7 downto 0);
   signal cache_index : STD_LOGIC_VECTOR(2 downto 0);
   signal cache_offset : STD_LOGIC_VECTOR(4 downto 0);
@@ -116,11 +116,13 @@ architecture Behavioral of CacheController is
   function state_to_bin(state: cache_state) return std_logic_vector is
     begin
     case state is
-      when IDLE => return "00";
-      when COMPARE => return "01";
-      when WRITE_BACK => return "10";
-      when LOAD_FROM_MEMORY => return "11";
-      when others => return "00";
+      when IDLE => return "000";
+      when COMPARE => return "001";
+      when WRITE_BACK => return "010";
+      when LOAD_FROM_MEMORY => return "011";
+		when START => return "100";
+		when CACHE_HIT => return "101";
+      when others => return "111";
     end case;
   end function;
 
@@ -219,6 +221,7 @@ architecture Behavioral of CacheController is
           if (mem_counter = 64) then
             mem_counter <= 0;
             sdram_memstrb <= '0';
+            d_bit(to_integer(unsigned(cache_index))) <= '0';
             current_state <= LOAD_FROM_MEMORY;
           else
             -- load cache first, then write to memory
@@ -238,6 +241,8 @@ architecture Behavioral of CacheController is
         when LOAD_FROM_MEMORY =>
           if (mem_counter = 64) then
             mem_counter <= 0;
+            v_bit(to_integer(unsigned(cache_index))) <= '1';
+            cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
             current_state <= COMPARE;
           else
             -- load memory first, then write to cache
@@ -271,19 +276,16 @@ architecture Behavioral of CacheController is
 ---------------------------------------------------------
 -- ILA ports
 ---------------------------------------------------------
---  ila_data(15 downto 0) <= CPU_addr;
---  ila_data(23 downto 16) <= cache_tag;
---  ila_data(26 downto 24) <= cache_index;
---  ila_data(31 downto 27) <= cache_offset;
---  ila_data(32) <= CPU_wr_rd;
---  ila_data(33) <= CPU_cs;
---  ila_data(34) <= CPU_trig;
---  ila_data(35) <= sram_wen(0);
---  ila_data(43 downto 36) <= d_bit;
---  ila_data(51 downto 44) <= v_bit;
---  ila_data(53 downto 52) <= state_to_bin(LOAD_FROM_MEMORY);
---  ila_data(55 downto 54) <= state_to_bin(current_state);
---  ila_data(56) <= CPU_rst;
+  -- ila_data(7 downto 0) <= d_bit;
+  -- ila_data(15 downto 8) <= v_bit;
+  -- ila_data(23 downto 16) <= cache_tag;
+  -- ila_data(26 downto 24) <= cache_index;
+  -- ila_data(31 downto 27) <= cache_offset;
+  -- ila_data(32) <= CPU_wr_rd;
+  -- ila_data(33) <= CPU_cs;
+  -- ila_data(34) <= CPU_trig;
+  -- ila_data(35) <= sram_wen(0);
+  -- ila_data(37 downto 35) <= state_to_bin(current_state);
   
 
 end Behavioral;
