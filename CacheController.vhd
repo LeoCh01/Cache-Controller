@@ -107,8 +107,8 @@ architecture Behavioral of CacheController is
   signal test2 : STD_LOGIC := '0';
   signal counter: std_logic_vector(15 downto 0);
 
-  type cache_state is (IDLE, COMPARE, WRITE_BACK, LOAD_FROM_MEMORY, CACHE_HIT);
-  signal current_state : cache_state;
+  type cache_state is (START, IDLE, COMPARE, WRITE_BACK, LOAD_FROM_MEMORY, CACHE_HIT);
+  signal current_state : cache_state := START;
 
 ---------------------------------------------------------
 -- functions
@@ -231,8 +231,8 @@ architecture Behavioral of CacheController is
               sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
               sdram_din <= sram_dout;
               sdram_memstrb <= '1';
-              mem_counter <= mem_counter + 1;
             end if;
+				mem_counter <= mem_counter + 1;
           end if;
 
         when LOAD_FROM_MEMORY =>
@@ -250,17 +250,19 @@ architecture Behavioral of CacheController is
               sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
               sram_din <= sdram_dout;
               sdram_memstrb <= '0';
-              mem_counter <= mem_counter + 1;
             end if;
+				mem_counter <= mem_counter + 1;
           end if;
 
         when CACHE_HIT =>
           CPU_Din <= sram_dout;
 			 cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
           current_state <= IDLE;
-
-        when others =>
+		  
+		  when START =>
 		    CPU_trig <= '0';
+          current_state <= IDLE;
+		  when others =>
           current_state <= IDLE;	
       end case;
     end if;
