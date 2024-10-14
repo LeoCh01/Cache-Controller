@@ -235,7 +235,7 @@ architecture Behavioral of CacheController is
               sdram_din <= sram_dout;
               sdram_memstrb <= '1';
             end if;
-				mem_counter <= mem_counter + 1;
+            mem_counter <= mem_counter + 1;
           end if;
 
         when LOAD_FROM_MEMORY =>
@@ -256,12 +256,12 @@ architecture Behavioral of CacheController is
               sram_din <= sdram_dout;
               sdram_memstrb <= '0';
             end if;
-				mem_counter <= mem_counter + 1;
+            mem_counter <= mem_counter + 1;
           end if;
 
         when CACHE_HIT =>
           CPU_Din <= sram_dout;
-			 cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
+          cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
           current_state <= IDLE;
 		  
 		  when START =>
