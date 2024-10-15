@@ -87,7 +87,6 @@ architecture Behavioral of CacheController is
   signal sdram_addr : STD_LOGIC_VECTOR(15 downto 0);
   signal sdram_wr_rd : STD_LOGIC;
   signal sdram_memstrb : STD_LOGIC;
-  signal sdram_din, sdram_dout : STD_LOGIC_VECTOR(7 downto 0);
 
   type tags is array(0 to 7) of STD_LOGIC_VECTOR(7 downto 0);
   signal cache_tags : tags := (others => (others => '0'));
@@ -153,8 +152,8 @@ architecture Behavioral of CacheController is
     ADDR => sdram_addr,
     WR_RD => sdram_wr_rd,
     MEMSTRB => sdram_memstrb,
-    DIN => sdram_din,
-    DOUT => sdram_dout
+    DIN => sram_dout,
+    DOUT => sram_din
   );
 
   icon_inst : icon port map (
@@ -232,7 +231,6 @@ architecture Behavioral of CacheController is
             else
               sdram_wr_rd <= '0';
               sdram_addr <= cache_tags(to_integer(unsigned(cache_index))) & cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
-              sdram_din <= sram_dout;
               sdram_memstrb <= '1';
             end if;
 				    mem_counter <= mem_counter + 1;
@@ -253,7 +251,6 @@ architecture Behavioral of CacheController is
             else
               sram_wen(0) <= '1';
               sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
-              sram_din <= sdram_dout;
               sdram_memstrb <= '0';
             end if;
 				    mem_counter <= mem_counter + 1;
