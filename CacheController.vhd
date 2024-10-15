@@ -119,8 +119,8 @@ architecture Behavioral of CacheController is
       when COMPARE => return "001";
       when WRITE_BACK => return "010";
       when LOAD_FROM_MEMORY => return "011";
-		when START => return "100";
-		when CACHE_HIT => return "101";
+    when START => return "100";
+    when CACHE_HIT => return "101";
       when others => return "111";
     end case;
   end function;
@@ -182,14 +182,14 @@ architecture Behavioral of CacheController is
       cache_tag <= CPU_addr(15 downto 8);
       cache_index <= CPU_addr(7 downto 5);
       cache_offset <= CPU_addr(4 downto 0);
-		
+    
       case current_state is
         when IDLE => 
           CPU_trig <= '1';
           if (CPU_cs = '1') then
-				    test2 <= '1';
+            test2 <= '1';
             current_state <= COMPARE;
-				    CPU_trig <= '0';
+            CPU_trig <= '0';
           end if;
 
         when COMPARE =>
@@ -198,7 +198,7 @@ architecture Behavioral of CacheController is
             if (CPU_wr_rd = '1') then
               -- write
               sram_wen(0) <= '1';
-              -- sram_din <= CPU_DOut;
+              sram_din <= CPU_DOut;
               sram_mux <= '0';
               d_bit(to_integer(unsigned(cache_index))) <= '1';
             else
@@ -235,7 +235,7 @@ architecture Behavioral of CacheController is
               sdram_din <= sram_dout;
               sdram_memstrb <= '1';
             end if;
-				    mem_counter <= mem_counter + 1;
+            mem_counter <= mem_counter + 1;
           end if;
 
         when LOAD_FROM_MEMORY =>
@@ -248,8 +248,8 @@ architecture Behavioral of CacheController is
             -- load memory first, then write to cache
             if (mem_counter mod 2 = 0) then
               sdram_wr_rd <= '1';
-				      sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
-				      sdram_memstrb <= '1';
+              sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
+              sdram_memstrb <= '1';
             else
               sram_wen(0) <= '1';
               sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
@@ -257,18 +257,18 @@ architecture Behavioral of CacheController is
               sram_mux <= '1';
               sdram_memstrb <= '0';
             end if;
-				    mem_counter <= mem_counter + 1;
+            mem_counter <= mem_counter + 1;
           end if;
 
         when CACHE_HIT =>
           CPU_Din <= sram_dout;
-			 cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
+       cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
           current_state <= IDLE;
-		  
-		  when START =>
-		    CPU_trig <= '0';
+      
+      when START =>
+        CPU_trig <= '0';
           current_state <= IDLE;
-		  when others =>
+      when others =>
           current_state <= IDLE;	
       end case;
     end if;
