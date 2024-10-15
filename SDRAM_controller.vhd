@@ -44,7 +44,7 @@ architecture Behavioral of SDRAM_controller is
     wea => SDRAM_wea,
     addra => SDRAM_addra,
     dina => SDRAM_dina,
-    douta => SDRAM_douta
+    douta => DOUT
   );
 
 ---------------------------------------------------------
@@ -54,7 +54,7 @@ architecture Behavioral of SDRAM_controller is
     begin
     if (clk'Event and clk='1') then
       if (MEMSTRB = '1') then
-        SDRAM_wea(0) <= WR_RD;
+        SDRAM_wea(0) <= not(WR_RD);
         SDRAM_addra <= ADDR(11 downto 0);
         SDRAM_dina <= DIN;
       end if;

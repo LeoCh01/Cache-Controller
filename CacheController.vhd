@@ -196,7 +196,7 @@ architecture Behavioral of CacheController is
         when COMPARE =>
           if (v_bit(to_integer(unsigned(cache_index))) = '1' and cache_tags(to_integer(unsigned(cache_index))) = cache_tag) then
             -- hit
-            if (CPU_wr_rd = '0') then
+            if (CPU_wr_rd = '1') then
               -- write
               sram_wen(0) <= '1';
               sram_din <= CPU_DOut;
@@ -228,14 +228,14 @@ architecture Behavioral of CacheController is
             if (mem_counter mod 2 = 0) then
               sdram_memstrb <= '0';
               sram_wen(0) <= '0';
-              sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
-            else
+				  sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
+				else
               sdram_wr_rd <= '0';
-              sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
+              sdram_addr <= cache_tags(to_integer(unsigned(cache_index))) & cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
               sdram_din <= sram_dout;
               sdram_memstrb <= '1';
             end if;
-            mem_counter <= mem_counter + 1;
+				mem_counter <= mem_counter + 1;
           end if;
 
         when LOAD_FROM_MEMORY =>
@@ -248,20 +248,20 @@ architecture Behavioral of CacheController is
             -- load memory first, then write to cache
             if (mem_counter mod 2 = 0) then
               sdram_wr_rd <= '1';
-              sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
-              sdram_memstrb <= '1';
+				  sdram_addr <= cache_tag & cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
+				  sdram_memstrb <= '1';
             else
               sram_wen(0) <= '1';
-              sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter, 5));
+              sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
               sram_din <= sdram_dout;
               sdram_memstrb <= '0';
             end if;
-            mem_counter <= mem_counter + 1;
+				mem_counter <= mem_counter + 1;
           end if;
 
         when CACHE_HIT =>
           CPU_Din <= sram_dout;
-          cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
+			 cache_tags(to_integer(unsigned(cache_index))) <= cache_tag;
           current_state <= IDLE;
 		  
 		  when START =>
