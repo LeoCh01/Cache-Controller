@@ -274,11 +274,14 @@ architecture Behavioral of CacheController is
     end if;
   end process;
 
-  if (sram_mux = '1') then
-    sram_din <= sdram_dout;
-  else
-    sram_din <= CPU_DOut;
-  end if;
+  process(sram_mux)
+  begin
+    if (sram_mux = '1') then
+      sram_din <= sdram_dout;
+    else
+      sram_din <= CPU_DOut;
+    end if;
+  end process;
   
 ---------------------------------------------------------
 -- ILA ports
