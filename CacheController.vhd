@@ -103,7 +103,7 @@ architecture Behavioral of CacheController is
   signal ila_data : STD_LOGIC_VECTOR(63 downto 0);
   signal trig0 : STD_LOGIC_VECTOR(7 downto 0);
   signal vio_out : STD_LOGIC_VECTOR(35 downto 0);
-  signal sram_mux : STD_LOGIC := 0;
+  signal sram_mux : STD_LOGIC := '0';
   signal counter: std_logic_vector(15 downto 0);
 
   type cache_state is (START, IDLE, COMPARE, WRITE_BACK, LOAD_FROM_MEMORY, CACHE_HIT);
@@ -187,7 +187,6 @@ architecture Behavioral of CacheController is
         when IDLE => 
           CPU_trig <= '1';
           if (CPU_cs = '1') then
-            test2 <= '1';
             current_state <= COMPARE;
             CPU_trig <= '0';
           end if;
