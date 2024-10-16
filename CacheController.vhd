@@ -198,7 +198,6 @@ architecture Behavioral of CacheController is
               -- write
               sram_wen(0) <= '1';
               sram_din <= CPU_DOut;
-              sram_mux <= '0';
               d_bit(to_integer(unsigned(cache_index))) <= '1';
             else
               -- read
@@ -251,9 +250,8 @@ architecture Behavioral of CacheController is
               sdram_memstrb <= '1';
             else
               sram_wen(0) <= '1';
-              sram_addr <= cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
-              -- sram_din <= sdram_dout;
-              sram_mux <= '1';
+              sram_addr <= cache_index & std_logic_vector(to_unsigned((mem_counter / 2) - 1, 5));
+              sram_din <= sdram_dout;
               sdram_memstrb <= '0';
             end if;
             mem_counter <= mem_counter + 1;
@@ -273,15 +271,6 @@ architecture Behavioral of CacheController is
     end if;
   end process;
 
-  process(sram_mux)
-  begin
-    if (sram_mux = '1') then
-      sram_din <= sdram_dout;
-    else
-      sram_din <= CPU_DOut;
-    end if;
-  end process;
-  
 ---------------------------------------------------------
 -- ILA ports
 ---------------------------------------------------------
