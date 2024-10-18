@@ -58,7 +58,7 @@ architecture Behavioral of CacheController is
     port (
       CONTROL: inout STD_LOGIC_VECTOR(35 downto 0);
       CLK : in STD_LOGIC;
-      DATA : in STD_LOGIC_VECTOR(63 downto 0);
+      DATA : in STD_LOGIC_VECTOR(127 downto 0);
       TRIG0 : in STD_LOGIC_VECTOR(7 downto 0)
     );
   end component;
@@ -100,7 +100,7 @@ architecture Behavioral of CacheController is
 
   signal control0 : STD_LOGIC_VECTOR(35 downto 0);
   signal control1 : STD_LOGIC_VECTOR(35 downto 0);
-  signal ila_data : STD_LOGIC_VECTOR(63 downto 0);
+  signal ila_data : STD_LOGIC_VECTOR(127 downto 0);
   signal trig0 : STD_LOGIC_VECTOR(7 downto 0);
   signal vio_out : STD_LOGIC_VECTOR(35 downto 0);
 
@@ -228,7 +228,7 @@ architecture Behavioral of CacheController is
             else
               sdram_wr_rd <= '0';
               sdram_addr <= cache_tags(to_integer(unsigned(cache_index))) & cache_index & std_logic_vector(to_unsigned(mem_counter / 2, 5));
-              sdram_din <= sram_dout;
+              -- sdram_din <= sram_dout; -- port mapped
               sdram_memstrb <= '1';
             end if;
             mem_counter <= mem_counter + 1;
@@ -272,16 +272,21 @@ architecture Behavioral of CacheController is
 ---------------------------------------------------------
 -- ILA ports
 ---------------------------------------------------------
-  -- ila_data(7 downto 0) <= d_bit;
-  -- ila_data(15 downto 8) <= v_bit;
-  -- ila_data(23 downto 16) <= cache_tag;
-  -- ila_data(26 downto 24) <= cache_index;
-  -- ila_data(31 downto 27) <= cache_offset;
-  -- ila_data(32) <= CPU_wr_rd;
-  -- ila_data(33) <= CPU_cs;
-  -- ila_data(34) <= CPU_trig;
-  -- ila_data(35) <= sram_wen(0);
-  -- ila_data(37 downto 35) <= state_to_bin(current_state);
-  
+-- ila_data(7 downto 0) <= d_bit;
+-- ila_data(15 downto 8) <= v_bit;
+-- ila_data(23 downto 16) <= cache_tag;
+-- ila_data(26 downto 24) <= cache_index;
+-- ila_data(31 downto 27) <= cache_offset;
+-- ila_data(32) <= CPU_wr_rd;
+-- ila_data(33) <= CPU_cs;
+-- ila_data(34) <= CPU_trig;
+-- ila_data(42 downto 35) <= CPU_Din;
+-- ila_data(50 downto 43) <= CPU_DOut;
+-- ila_data(53 downto 51) <= state_to_bin(current_state);
+-- ila_data(61 downto 54) <= sram_addr;
+-- ila_data(69 downto 62) <= sram_din;
+-- ila_data(77 downto 70) <= sram_dout;
+-- ila_data(58 downto 43) <= sdram_addr;
+-- ila_data(66 downto 59) <= sdram_dout;
 
 end Behavioral;
